@@ -1,202 +1,131 @@
 import random
+import tkinter as tk
+from tkinter import scrolledtext, Tk, Text
+from vigenere_cipher import table3, vigerenencrypt, decrypt
+from row_cipher import rowencrypt, rowdecrypt
+from product_cipher import productencrypt, productdecrypt
 
+def encrypt_decrypt():
+    global encrypted, decrypted, encrypted2, decrypted2, encrypted3, decrypted3
 
-def table3():
-    # Create a list to store the table
-    letters_and_digits = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-    for i in range(len(letters_and_digits)):
-        row = []
-        # Loop through the letters and digits and create a list for each row
-        for j in range(len(letters_and_digits)):
-            letter = (i + j) % len(letters_and_digits)
-            row.append(letters_and_digits[letter])
+    plaintext = plaintext_input.get("1.0", tk.END).strip()
+    table = []
+    hashmap = {}
+    table3(table, hashmap)
 
-        # Add the row to the table
-        table.append(row)
-    # Create a hashmap that maps integers to letters and digits
-    for i in range(37):
-        if i == 36:
-            hashmap[i] = " "
-        else:
-            hashmap[i] = letters_and_digits[i]
-
-
-def vigerenencrypt(plaintext, key):
-    # Create a list to store the ciphertext
-    ciphertext = []
-    # Loop through the plaintext
+    # Vigenere
+    key = ""
+    plain = ""
     for i in range(len(plaintext)):
-        # Get the corresponding row and column of the plaintext character
-        row = list(hashmap.keys())[list(hashmap.values()).index(plaintext[i].upper())]
-        column = list(hashmap.keys())[list(hashmap.values()).index(key[i])]
-
-        ciphertext.append(table[row][column])
-    # Return the ciphertext as a string
-    return "".join(ciphertext)
-
-
-def rowencrypt(plaintext, key):
-    # Create a list to store the ciphertext
-    ciphertext = []
-    plaintexttable = []
-    # Loop through the plaintext
-    lenthnum = round(len(plaintext) / len(key))
-    if len(plaintext) % len(key) != 0:
-        lenthnum += 1
-    # Create a 2D list to store the table
-    for i in range(lenthnum):
-        row = []
-        for j in range(len(key)):
-            num = i * len(key) + j
-            if num < len(plaintext):
-                row.append(plaintext[num])
-            else:
-                row.append(" ")
-        plaintexttable.append(row)
-        # Add the row to the table
-    for i in range(len(key)):
-        for j in range(lenthnum):
-            ciphertext.append(plaintexttable[j][key[i] - 1])
-    # Return the ciphertext as a string
-    return "".join(ciphertext)
-
-
-# this uses ceaser cipher and permutates the order of the characters in the encrypted message
-def productencrypt(plaintext, key):
-    plaintext2 = []
-    for i in range(len(plaintext)):
-        num = (
-                list(hashmap.keys())[list(hashmap.values()).index(plaintext[i].upper())] + 2
-        )
-        if num >= 37:
-            plaintext2.append(hashmap[num - 36])
+        y = random.randint(0, 35)
+        key += hashmap[y]
+        if plaintext[i] == " ":
+            key = key[:-1]
         else:
-            plaintext2.append(hashmap[num])
+            plain += plaintext[i]
+    encrypted = vigerenencrypt(plain, key, hashmap, table)
+    decrypted = decrypt(encrypted, key, hashmap, table)
 
-    # Permute the order of the characters in the list
-    permuted_chars = []
-    for i in range(len(plaintext2)):
-        permuted_chars.append(plaintext2[key[i] - 1])
-    # Convert the permuted list of characters back to a string
-    return "".join(permuted_chars)
+    vigenere_encrypted.config(state='normal')
+    vigenere_encrypted.delete("1.0", tk.END)
+    vigenere_encrypted.insert(tk.END, encrypted)
+    vigenere_encrypted.config(state='disabled')
 
-
-def productdecrypt(ciphertext, key):
-    # Permute the order of the characters in the encrypted message to decrypt it
-    decrypted_chars = list(ciphertext)
-    for i in range(len(ciphertext)):
-        decrypted_chars[key[i] - 1] = ciphertext[i]
-
-    # decrypt ceaser cipher
-    for i in range(len(ciphertext)):
-        num = (
-                list(hashmap.keys())[list(hashmap.values()).index(decrypted_chars[i].upper())] - 2
-        )
-        if num <= 0:
-            decrypted_chars[i] = hashmap[num + 36]
+    vigenere_decrypted.config(state='normal')
+    vigenere_decrypted.delete("1.0", tk.END)
+    vigenere_decrypted.insert(tk.END, decrypted)
+    vigenere_decrypted.config(state='disabled')
+    # Row
+    key2 = 0
+    num = round(len(plaintext) / 5)
+    for i in range(num):
+        y = random.randint(1, num)
+        if key2 == 0:
+            key2 = []
         else:
-            decrypted_chars[i] = hashmap[num]
-    # Convert the list of characters back to a string
-    return "".join(decrypted_chars)
+            while y in key2:
+                y = random.randint(1, num)
+        key2.append(y)
+    encrypted2 = rowencrypt(encrypted, key2)
+    decrypted2 = rowdecrypt(encrypted2, key2)
 
+    row_encrypted.config(state='normal')
+    row_encrypted.delete("1.0", tk.END)
+    row_encrypted.insert(tk.END, encrypted2)
+    row_encrypted.config(state='disabled')
 
-def rowdecrypt(ciphertext, key):
-    # Create a list to store the plaintext
-    plaintext = []
-    ciphertexttable = []
-    num = 0
-    # Loop through the ciphertext
-    lenthnum = round(len(ciphertext) / len(key))
-    for i in range(len(key)):
-        col = []
-        for j in range(lenthnum):
-            if num < len(ciphertext):
-                col.append(ciphertext[num])
-                num += 1
-            else:
-                col.append(" ")
-        ciphertexttable.append(col)
+    row_decrypted.config(state='normal')
+    row_decrypted.delete("1.0", tk.END)
+    row_decrypted.insert(tk.END, decrypted2)
+    row_decrypted.config(state='disabled')
+    # Product
+    key3 = 0
+    for i in range(len(encrypted2)):
+        y = random.randint(1, len(encrypted2))
+        if key3 == 0:
+            key3 = []
+        else:
+            while y in key3:
+                y = random.randint(1, len(encrypted2))
+        key3.append(y)
+    encrypted3 = productencrypt(encrypted2, key3, hashmap)
+    decrypted3 = productdecrypt(encrypted3, key3, hashmap)
 
-    # Rearrange the columns of the ciphertext table using the key
-    rearrangedtable = []
-    for i in range(len(key)):
-        col = []
-        for j in range(lenthnum):
-            col.append(ciphertexttable[key.index(i + 1)][j])
-        rearrangedtable.append(col)
+    product_encrypted.config(state='normal')
+    product_encrypted.delete("1.0", tk.END)
+    product_encrypted.insert(tk.END, encrypted3)
+    product_encrypted.config(state='disabled')
 
-    # Extract the plaintext from the rearranged table
-    for i in range(lenthnum):
-        for j in range(len(key)):
-            if rearrangedtable[j][i] == " ":
-                skip = 0
-            else:
-                plaintext.append(rearrangedtable[j][i])
+    product_decrypted.config(state='normal')
+    product_decrypted.delete("1.0", tk.END)
+    product_decrypted.insert(tk.END, decrypted3)
+    product_decrypted.config(state='disabled')
 
-    # Return the plaintext as a string
-    return "".join(plaintext)
+    result.config(state='normal')
+    result.delete("1.0", tk.END)
+    result.insert(tk.END, encrypted3)
+    result.config(state='disabled')
+root = tk.Tk()
+root.title("Encryption/Decryption Tool")
+global encrypted, decrypted, encrypted2, decrypted2, encrypted3, decrypted3
+frame = tk.Frame(root, bg="grey")
+frame.pack(padx=10, pady=10)
 
+plaintext_label = tk.Label(frame, text="Enter plaintext:", font=("Arial", 20, "bold"), bg="grey")
+plaintext_label.grid(row=0, column=0, sticky="w")
 
-def decrypt(ciphertext, key):
-    # Create a list to store the plaintext
-    plaintext = []
-    # Loop through the ciphertext
-    for i in range(len(ciphertext)):
-        # Get the corresponding row of the key character
-        key_row = list(hashmap.keys())[list(hashmap.values()).index(key[i])]
-        table_row = table[key_row].index(ciphertext[i])
-        plaintext.append(hashmap[table_row])
-    # Return the plaintext as a string
-    return "".join(plaintext)
+plaintext_input = tk.Text(frame, wrap=tk.WORD, width=40, height=2,font= ("Arial", 10, "bold"))
+plaintext_input.grid(row=1, column=0, padx=5, pady=5)
 
+tk.Label(frame, text=f"Result:",font= ("Arial", 15, "bold"),bg="grey").grid(row=3, column=0, sticky="w")
+result = tk.Text(frame, wrap=tk.WORD, width=30, height=2, state='disabled',font= ("Arial", 10, "bold"))
+result.grid(row=4, column=0, padx=5, pady=5)
 
-table = []
-hashmap = {}
-table3()
-plaintext = input("Enter the plaintext: ")
-key = ""
-plain = ""
-for i in range(len(plaintext)):
-    y = random.randint(0, 35)
-    key += hashmap[y]
-    if plaintext[i] == " ":
-        key = key[:-1]
-    else:
-        plain += plaintext[i]
-encrypted = vigerenencrypt(plain, key)
-key2 = 0
-num = round(len(plaintext) / 5)
-for i in range(num):
-    y = random.randint(1, num)
-    # use a list to store the key
-    if key2 == 0:
-        key2 = []
-    else:
-        while y in key2:
-            y = random.randint(1, num)
-    key2.append(y)
-encrypted2 = rowencrypt(encrypted, key2)
-key3 = 0
-for i in range(len(encrypted2)):
-    y = random.randint(1, len(encrypted2))
-    # use a list to store the key
-    if key3 == 0:
-        key3 = []
-    else:
-        while y in key3:
-            y = random.randint(1, len(encrypted2))
-    key3.append(y)
-encrypted3 = productencrypt(encrypted2, key3)
-decrypted3 = productdecrypt(encrypted3, key3)
-decrypted2 = rowdecrypt(decrypted3, key2)
-decrypted = decrypt(decrypted2, key)
-num1 = 8049367138491
-num2 = list(range(5))
-print(num2)
-print("Your encrypted vigeren text is:", encrypted, "with key:", key)
-print(hashmap)
-print("Your decrypted vigeren text is:", decrypted)
-print("Your encrypted row text is:", encrypted2, "with key:", key2)
-print("Your decrypted row text is:", decrypted2)
-print("Your encrypted product text is:", encrypted3, "with key:", key3)
-print("Your decrypted product text is:", decrypted3)
+encrypt_button = tk.Button(frame, text="Encrypt/Decrypt", command=encrypt_decrypt, font=("Arial", 15, "bold"), bg="#009FBD", bd=3)
+encrypt_button.grid(row=2, column=0, pady=10)
+
+tk.Label(frame, text=f"Vigenere Encrypted",font= ("Arial", 15, "bold"),bg="grey").grid(row=0, column=1, sticky="s")
+vigenere_encrypted = tk.Text(frame, wrap=tk.WORD, width=40, height=2, state='disabled',font= ("Arial", 10, "bold"))
+vigenere_encrypted.grid(row=1, column=1, padx=5, pady=5)
+
+tk.Label(frame, text=f"Vigenere Decrypted",font= ("Arial", 15, "bold"),bg="grey").grid(row=2, column=1, sticky="s")
+vigenere_decrypted = tk.Text(frame, wrap=tk.WORD, width=40, height=2, state='disabled',font= ("Arial", 10, "bold"))
+vigenere_decrypted.grid(row=3, column=1, padx=5, pady=5)
+
+tk.Label(frame, text=f"Row Encrypted",font= ("Arial", 15, "bold"),bg="grey").grid(row=4, column=1, sticky="s")
+row_encrypted = tk.Text(frame, wrap=tk.WORD, width=40, height=2, state='disabled',font= ("Arial", 10, "bold"))
+row_encrypted.grid(row=5, column=1, padx=5, pady=5)
+
+tk.Label(frame, text=f"Row Decrypted",font= ("Arial", 15, "bold"),bg="grey").grid(row=6, column=1, sticky="s")
+row_decrypted = tk.Text(frame, wrap=tk.WORD, width=40, height=2, state='disabled',font= ("Arial", 10, "bold"))
+row_decrypted.grid(row=7, column=1, padx=5, pady=5)
+
+tk.Label(frame, text=f"Product Encrypted",font= ("Arial", 15, "bold"),bg="grey").grid(row=8, column=1, sticky="s")
+product_encrypted = tk.Text(frame, wrap=tk.WORD, width=40, height=2, state='disabled',font= ("Arial", 10, "bold"))
+product_encrypted.grid(row=9, column=1, padx=5, pady=5)
+
+tk.Label(frame, text=f"Product Decrypted",font= ("Arial", 15, "bold"),bg="grey").grid(row=10, column=1, sticky="s")
+product_decrypted = tk.Text(frame, wrap=tk.WORD, width=40, height=2, state='disabled',font= ("Arial", 10, "bold"))
+product_decrypted.grid(row=11, column=1, padx=5, pady=5)
+
+root.mainloop()
